@@ -12,6 +12,6 @@ public class Timer
         ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
         exec.scheduleAtFixedRate(() -> {
             Main.compareTimes();
-        }, 0, 1, TimeUnit.MINUTES);
+        }, 0, 5, TimeUnit.SECONDS);
     }
 }

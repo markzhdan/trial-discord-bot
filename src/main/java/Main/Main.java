@@ -221,8 +221,7 @@ public class Main
                     guild.addRoleToMember(member, role).queue());
         }
 
-        accepted.setTitle("" + member.getEffectiveName() + " Accepted");
-        accepted.setDescription(member.getAsMention());
+        accepted.setDescription(member.getAsMention() + " **Accepted**");
         accepted.setColor(Color.green);
         accepted.addField("Yes", "" + yes, true);
         accepted.addField("No", "" + no, true);
@@ -237,8 +236,7 @@ public class Main
         Member member = guild.getMember(user);
         guild.removeRoleFromMember(member, guild.getRolesByName("Trial Member", true).get(0)).queue();
 
-        denied.setTitle("" + member.getEffectiveName() + " Denied");
-        denied.setDescription(member.getAsMention());
+        denied.setDescription(member.getAsMention() + " **Denied**");
         denied.setColor(Color.red);
         denied.addField("Yes", "" + yes, true);
         denied.addField("No", "" + no, true);
@@ -258,7 +256,7 @@ public class Main
             if((((System.currentTimeMillis() - usr.getLong("timeJoined"))) > trialLengthMilliseconds) && usr.getBoolean("isOnTrial"))
             {
                 User user = jda.getUserById(usr.getString("discordID"));
-                Guild guild = jda.getGuildById("661807520435798017");
+                Guild guild = jda.getGuildById("753059606707830794");
 
                 if(user != null)
                 {
@@ -273,7 +271,7 @@ public class Main
                 if(((System.currentTimeMillis() - usr.getLong("voteStarted"))) > voteLengthMilliseconds)
                 {
                     User user = jda.getUserById(usr.getString("discordID"));
-                    Guild guild = jda.getGuildById("661807520435798017");
+                    Guild guild = jda.getGuildById("753059606707830794");
 
                     if(user != null)
                     {
