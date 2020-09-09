@@ -10,13 +10,11 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.bson.Document;
@@ -40,7 +38,7 @@ public class Main
     private static long voteLengthMilliseconds = 86400000;
 
     public static void main(String[] args) throws LoginException {
-        jda = JDABuilder.createDefault("NzQ0NzExMjk1NDMyOTE3MDMy.XznMcA.ZnSgJ3xCE5gYbjGDVcYHakjlCYo").enableIntents(GatewayIntent.GUILD_MEMBERS).setMemberCachePolicy(MemberCachePolicy.ALL).build();
+        jda = JDABuilder.createDefault("NzQ0NzExMjk1NDMyOTE3MDMy.XznMcA.ZnSgJ3xCE5gYbjGDVcYHakjlCYo").enableIntents(GatewayIntent.GUILD_MEMBERS).setMemberCachePolicy(MemberCachePolicy.ALL).setActivity(Activity.playing("Morven SMP")).build();
         jda.getPresence().setStatus(OnlineStatus.ONLINE);
 
         jda.addEventListener(new userJoin());
@@ -207,8 +205,9 @@ public class Main
         }
     }
 
-    public static void userAccepted(User user, Guild guild)
+    public static void userAccepted(User user, Guild guild, int yes, int no)
     {
+        EmbedBuilder accepted  = new EmbedBuilder();
         Member member = guild.getMember(user);
         guild.removeRoleFromMember(member, guild.getRolesByName("Trial Member", true).get(0)).queue();
 
@@ -221,12 +220,31 @@ public class Main
             guild.createRole().setName("Member").setColor(Color.MAGENTA).queue(role ->
                     guild.addRoleToMember(member, role).queue());
         }
+
+        accepted.setTitle("" + member.getEffectiveName() + " Accepted");
+        accepted.setDescription(member.getAsMention());
+        accepted.setColor(Color.green);
+        accepted.addField("Yes", "" + yes, true);
+        accepted.addField("No", "" + no, true);
+        accepted.addField("Percentage", "" + ((double) yes / (yes+no)) * 100 + "%", false);
+
+        guild.getTextChannelsByName("trial-results", true).get(0).sendMessage(accepted.build()).queue();
     }
 
-    public static void userDenied(User user, Guild guild)
+    public static void userDenied(User user, Guild guild, int yes, int no)
     {
+        EmbedBuilder denied  = new EmbedBuilder();
         Member member = guild.getMember(user);
         guild.removeRoleFromMember(member, guild.getRolesByName("Trial Member", true).get(0)).queue();
+
+        denied.setTitle("" + member.getEffectiveName() + " Denied");
+        denied.setDescription(member.getAsMention());
+        denied.setColor(Color.red);
+        denied.addField("Yes", "" + yes, true);
+        denied.addField("No", "" + no, true);
+        denied.addField("Percentage", "" + ((double) yes / (yes+no)) * 100 + "%", false);
+
+        guild.getTextChannelsByName("trial-results", true).get(0).sendMessage(denied.build()).queue();
     }
 
     public static void compareTimes()
@@ -268,11 +286,11 @@ public class Main
                         }
                         if((double) yes / (yes+no) >= 0.5)
                         {
-                            userAccepted(user, guild);
+                            userAccepted(user, guild, yes, no);
                         }
                         else
                         {
-                            userDenied(user, guild);
+                            userDenied(user, guild, yes, no);
                         }
                         userData.deleteOne(getUserDoc(user));
                     }
