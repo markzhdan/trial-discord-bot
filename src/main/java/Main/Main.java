@@ -38,7 +38,7 @@ public class Main
     private static long voteLengthMilliseconds = 86400000;
 
     public static void main(String[] args) throws LoginException {
-        jda = JDABuilder.createDefault("").enableIntents(GatewayIntent.GUILD_MEMBERS).setMemberCachePolicy(MemberCachePolicy.ALL).setActivity(Activity.playing("Morven SMP")).build();
+        jda = JDABuilder.createDefault("NzQ0NzExMjk1NDMyOTE3MDMy.XznMcA.4yMT2HuzEM2C1zZ2FxY0izp6TOI").enableIntents(GatewayIntent.GUILD_MEMBERS).setMemberCachePolicy(MemberCachePolicy.ALL).setActivity(Activity.playing("Morven SMP")).build();
         jda.getPresence().setStatus(OnlineStatus.ONLINE);
 
         jda.addEventListener(new userJoin());
