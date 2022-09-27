@@ -19,6 +19,16 @@
             <artifactId>mongodb-driver-sync</artifactId>
             <version>3.11.2</version>
         </dependency>
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>2.2.4</version>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -34,4 +44,26 @@
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
+    <!-- include below build tag to your existing pom.xml  -->
+    <build>
+        <plugins>
+            <plugin>
+
+                <!-- Building an executable jar -->
+
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <!-- give full qualified name of your main class-->
+                            <mainClass>me.cuft.Main.Main</mainClass>
+
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

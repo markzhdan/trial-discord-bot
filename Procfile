@@ -1,0 +1,1 @@
+worker: java $JAVA_OPTS -jar MorvenDiscordBot.jar $JAR_OPTS

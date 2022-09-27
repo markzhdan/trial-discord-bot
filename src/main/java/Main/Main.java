@@ -1,15 +1,13 @@
 package Main;
 
-import Listeners.Commands;
-import Listeners.userJoin;
-import Listeners.userLeaves;
-import Listeners.voteReaction;
+import Listeners.*;
 import Utility.Timer;
 import Utility.Utility;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -34,31 +32,62 @@ public class Main
     public static String PREFIX = "*";
     private static MongoCollection<Document> userData;
     private static MongoCollection<Document> timeData;
+    private static MongoCollection<Document> playerTime;
     private static long trialLengthMilliseconds = 1209600000;
     private static long voteLengthMilliseconds = 86400000;
 
+    private static final Dotenv config = Dotenv.configure().load();
+
     public static void main(String[] args) throws LoginException {
-        jda = JDABuilder.createDefault("NzQ0NzExMjk1NDMyOTE3MDMy.XznMcA.4yMT2HuzEM2C1zZ2FxY0izp6TOI").enableIntents(GatewayIntent.GUILD_MEMBERS).setMemberCachePolicy(MemberCachePolicy.ALL).setActivity(Activity.playing("Morven SMP")).build();
+        jda = JDABuilder.createDefault(config.get("TOKEN")).enableIntents(GatewayIntent.GUILD_MEMBERS).setMemberCachePolicy(MemberCachePolicy.ALL).setActivity(Activity.playing("Morven SMP")).build();
         jda.getPresence().setStatus(OnlineStatus.ONLINE);
 
-        jda.addEventListener(new userJoin());
+        jda.addEventListener(new RoleRemoveEvent());
+        jda.addEventListener(new RoleAddEvent());
         jda.addEventListener(new userLeaves());
         jda.addEventListener(new voteReaction());
         jda.addEventListener(new Commands());
 
-        MongoClient mongoClient = MongoClients.create("mongodb+srv://Cuft:Cuft@morvencosmetics.alnd1.mongodb.net/<dbname>?retryWrites=true&w=majority");
+        MongoClient mongoClient = MongoClients.create(config.get("DBLINK"));
         MongoDatabase database = mongoClient.getDatabase("MorvenCosmetics");
         userData = database.getCollection("discordBot");
         timeData = database.getCollection("discordBotTimes");
+        playerTime = database.getCollection("playerTimes");
 
         updateLength();
 
         timer.startTimer();
     }
 
+    public static void createPlayerTimeDoc(String ign)
+    {
+        Document userDoc = new Document("playerIGN", ign);
+        Document found = userData.find(userDoc).first();
+
+        if(found == null)
+        {
+            userDoc.append("date", 0);
+            userDoc.append("time", 0);
+
+            playerTime.insertOne(userDoc);
+        }
+    }
+
     public static Document getUserDoc(User user)
     {
         return userData.find(new Document("discordID", user.getId())).first();
+    }
+
+    public static void updateJoinMilisecond(User user)
+    {
+        Document doc = getUserDoc(user);
+
+        if(doc != null)
+        {
+            Bson updatedValue = new Document("timeJoined", (long) 0);
+            Bson updatedOperation = new Document("$set", updatedValue);
+            userData.updateOne(doc, updatedOperation);
+        }
     }
 
     public static void updateTrialBoolean(User user, boolean bool)
@@ -134,13 +163,13 @@ public class Main
 
         if(trialOrVote.equalsIgnoreCase("trial"))
         {
-            updatedValue = new Document("trialLengthMilliseconds", time);
-            trialLengthMilliseconds = time;
+            updatedValue = new Document("trialLengthMilliseconds", (long) time);
+            trialLengthMilliseconds = (long) time;
         }
         else
         {
-            updatedValue = new Document("voteLengthMilliseconds", time);
-            voteLengthMilliseconds = time;
+            updatedValue = new Document("voteLengthMilliseconds", (long) time);
+            voteLengthMilliseconds = (long) time;
         }
 
         Bson updatedOperation = new Document("$set", updatedValue);
@@ -185,15 +214,30 @@ public class Main
 
     public static void startVote(User user, Guild guild)
     {
-        guild.getTextChannelsByName("trial-members", true).get(0).sendMessage(user.getName() + " - " + user.getAsMention()).queue(new Consumer<Message>() {
-            @Override
-            public void accept(Message message) {
-                //Check
-                message.addReaction("👑").queue();
-                //X
-                message.addReaction("👢").queue();
-            }
-        });
+        if(guild.getMemberById(user.getId()).getNickname() == null)
+        {
+            guild.getTextChannelsByName("trial-members", true).get(0).sendMessage(user.getName() + " - " + user.getAsMention()).queue(new Consumer<Message>() {
+                @Override
+                public void accept(Message message) {
+                    //Check
+                    message.addReaction("👑").queue();
+                    //X
+                    message.addReaction("👢").queue();
+                }
+            });
+        }
+        else
+        {
+            guild.getTextChannelsByName("trial-members", true).get(0).sendMessage(guild.getMemberById(user.getId()).getNickname() + " - " + user.getAsMention()).queue(new Consumer<Message>() {
+                @Override
+                public void accept(Message message) {
+                    //Check
+                    message.addReaction("👑").queue();
+                    //X
+                    message.addReaction("👢").queue();
+                }
+            });
+        }
 
         Document doc = getUserDoc(user);
 
@@ -243,11 +287,16 @@ public class Main
         denied.addField("Percentage", "" + ((double) yes / (yes+no)) * 100 + "%", false);
 
         guild.getTextChannelsByName("trial-results", true).get(0).sendMessage(denied.build()).queue();
+
+
     }
 
     public static void compareTimes()
     {
-        jda.getGuilds().get(0).loadMembers();
+        for(Guild guild : jda.getGuilds())
+        {
+            guild.loadMembers();
+        }
         List<Document> users = userData.find().into(new ArrayList<Document>());
 
         for(Document usr : users)
@@ -256,7 +305,7 @@ public class Main
             if((((System.currentTimeMillis() - usr.getLong("timeJoined"))) > trialLengthMilliseconds) && usr.getBoolean("isOnTrial"))
             {
                 User user = jda.getUserById(usr.getString("discordID"));
-                Guild guild = jda.getGuildById("753059606707830794");
+                Guild guild = jda.getGuildById("661807520435798017");
 
                 if(user != null)
                 {
@@ -271,7 +320,7 @@ public class Main
                 if(((System.currentTimeMillis() - usr.getLong("voteStarted"))) > voteLengthMilliseconds)
                 {
                     User user = jda.getUserById(usr.getString("discordID"));
-                    Guild guild = jda.getGuildById("753059606707830794");
+                    Guild guild = jda.getGuildById("661807520435798017");
 
                     if(user != null)
                     {
