@@ -6,7 +6,7 @@ This bot keeps track of a player's trial period and automatically polls existing
 
 
 # Features
-1. Connects with MongoDB to create, store and updated member data.
+1. Connects with MongoDB to create, store and update member data.
 
 2. Automatic member voting system and results.
     - To start a trial period, assign the "trial" role to a user.
