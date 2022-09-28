@@ -1,4 +1,6 @@
 # DiscordBot-MorvenSMP
+>One of my big projects...
+
 Discord bot for Morven SMP discord server
 
 # Purpose
