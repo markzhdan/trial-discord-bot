@@ -1,4 +1,4 @@
-# DiscordBot-Morven
+# DiscordBot-MorvenSMP
 Discord bot for Morven SMP discord server
 
 # Purpose
