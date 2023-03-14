@@ -1,4 +1,4 @@
-# DiscordBot-MorvenSMP
+# Trial Discord Bot
 >One of my big projects...
 
 Discord bot for Morven SMP discord server
